@@ -17,6 +17,9 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from datetime import datetime, date, timedelta
 
+import environ
+
+
 
 class Auth(APIView):
   @method_decorator(csrf_exempt)
@@ -28,25 +31,49 @@ class Auth(APIView):
       queryset = User.objects.get(pk=request.data.get("user_name"))
     except:
       return Response(status=status.HTTP_404_NOT_FOUND)
-    now = str(datetime.now())
-    expired = str(datetime.now() + timedelta(minutes=15))
-    print(now)
-    print(expired)
-    keys = {
-      'player': request.data.get("user_name"),
-      'date': now,
-      'expiration_date': expired
-    }
-    if queryset.user_name == request.data.get("user_name") and queryset.password == request.data.get("password"):
-      token = jwt.encode(
-        keys,
-        'a!zLCLRvyQ%sc!rGhTW9z@CU9JU)bxv!nMtJ6E*g*$*%7I*5GF82s@2TH+cGq9%BnNJP(wEhy4HsRus2xXaJ%xcDMyL597', 
-        algorithm='HS256')
-      return Response(data={token},status=status.HTTP_200_OK)
-    return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-
+    raw_password = request_data['password'].encode('utf_8')
+    password_hash = bcrypt.hashpw(base64.b64encode(hashlib.sha256(raw_password).digest()), bcrypt.gensalt(rounds=12, prefix=b"2a"))
+    original_password = queryset.data.get("password")
+    if raw_password == original_password:
+      now = str(datetime.now())
+      expired = str(datetime.now() + timedelta(minutes=15))
+      keys = {
+        'player': request.data.get("user_name"),
+        'date': now,
+        'expiration_date': expired
+      }
+      env = environ.Env()
+      environ.Env.read_env()
+      if queryset.user_name == request.data.get("user_name") and queryset.password == request.data.get("password"):
+        token = jwt.encode(
+          keys,
+          env("SECRET_KEY"),
+          algorithm='HS256')
+        return Response(data=token,status=status.HTTP_200_OK)
+      return Response(status=status.HTTP_404_NOT_FOUND)
+    else:
+      return Response(status=404)
+  def VerifyToken(token):
+    try:
+      env = environ.Env()
+      environ.Env.read_env()
+      # key = 
+      data = jwt.decode(token, env("SECRET_KEY"), algorithms=['HS256'])
+      player = data['player']
+      expired = data['expiration_date']
+      # if 
+      # user
+      try:
+        user = User.objects.get(pk=player)
+      except:
+        user = False
+      now = str(datetime.now())
+      if user != False and now < expired:
+        return True
+      else:
+        return False
+    except jwt.JWTError:
+      return False
 
   def custom_exception_handler(exc, context):
     # Call REST framework's default exception handler first,

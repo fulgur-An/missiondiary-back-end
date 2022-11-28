@@ -23,19 +23,19 @@ class User(models.Model):
   #   verbose_name="related auth")
   family_group = models.ForeignKey(
     FamilyGroup,
-    null= True,
-    on_delete=models.SET_NULL,
+    null= True,blank=True,
+    on_delete=models.SET_NULL, default=''
   )
-  items = models.ManyToManyField(Item)
+  items = models.ManyToManyField(Item, null=True)
   user_name = models.CharField(primary_key=True, max_length=100)
   mail = models.EmailField(max_length=100)
   password = models.CharField(max_length=100)
   name = models.CharField(max_length=100)
   last_name = models.CharField(max_length=100)
-  avatar = models.ImageField()
+  avatar = models.ImageField(null=True)
 
 
-
+  
 
 class Family(models.Model):
   user = models.ForeignKey(User, on_delete=models.CASCADE)

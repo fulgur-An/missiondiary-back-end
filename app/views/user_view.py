@@ -7,71 +7,62 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from app.serializers.user_serializer import UserSerializer
-from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
-
-
+from app.views.auth_view import Auth
 class UserView(APIView):
-  # permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
   serializer_class = UserSerializer
-  
   def get(self, request, id=0):
-    data={'message':"users not found..."}
-    if (id>0):
-      users=list(User.objects.values())
-      if len(users) > 0:
-        user=users[id - 1]
-        data={'users':user}
-    else:
-      users=list(User.objects.values())
-      if len(users)>0:
-        data={'message':"success",'users':users}
-    return JsonResponse(data)
-
-  
-  def post(self, request):
-
-    serializer = self.serializer_class(data=request.data)
-    data=Response(
-      serializer.errors,
-      status=status.HTTP_400_BAD_REQUEST)
-    if serializer.is_valid():
-      jd = json.loads(request.body)
-      User.objects.create(family_group=jd['family_group'],
-      items=jd['items'],
-      user_name=jd['user_name'],
-      mail=jd['mail'],
-      password=jd['password'],
-      name=jd['name'],
-      last_name=jd['last_name'],
-      avatar=jd['avatar'],
-      )
-      data = {'message':'Success'}
-    return JsonResponse(data)
-
-  def put(self, request):
-    jd = json.loads(request.body)
-    users=list(User.objects.filter(id=id).values())
-    if len(users) > 0:
-      user=User.objects.get(id=id)
-      user.family_group=jd['family_group']
-      user.items=jd['items']
-      user.user_name=jd['user_name']
-      user.mail=jd['mail']
-      user.password=jd['password']
-      user.name=jd['name']
-      user.last_name=jd['last_name']
-      user.avatar=jd['avatar']
-      data= {'message': 'Success'}
-    else:
+    isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
+    if isAuthenticated:
       data={'message':"users not found..."}
-    return JsonResponse(data)
+      if (id>0):
+        users=list(User.objects.values())
+        if len(users) > 0:
+          user=users[id - 1]
+          user['password'] = ''
+          data={'users':user}
+      else:
+        users=list(User.objects.values())
+        if len(users)>0:
+          data={'message':"success",'users':users}
+      return JsonResponse(data)
+    else:
+      return Response(status=401)
+
+
+  def put(self, request, id):
+    isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
+    if isAuthenticated:
+      jd = json.loads(request.body)
+      users=list(User.objects.filter(id=id).values())
+      if len(users) > 0:
+        user=User.objects.get(id=id)
+        user.family_group=jd['family_group']
+        user.items=jd['items']
+        user.user_name=jd['user_name']
+        user.mail=jd['mail']
+        user.password=jd['password']
+        user.name=jd['name']
+        user.last_name=jd['last_name']
+        user.avatar=jd['avatar']
+        data= {'message': 'Success'}
+      else:
+        data={'message':"users not found..."}
+      return JsonResponse(data)
+    else:
+      return Response(status=401)
     
   def delete(self, request, id):
-    users=list(User.objects.filter(id=id).values())
-    if len(users) > 0:
-      User.objects.filter(id=id).delete()
-      data= {'message': 'Success'}
+
+    isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
+    if isAuthenticated:
+      users=list(User.objects.filter(id=id).values())
+      if len(users) > 0:
+        User.objects.filter(id=id).delete()
+        data= {'message': 'Success'}
+      else:
+        data={'message':"users not found..."}
+      return JsonResponse(data)
     else:
-      data={'message':"users not found..."}
-    return JsonResponse(data)
+      return Response(status=401)
+
 
