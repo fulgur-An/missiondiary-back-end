@@ -7,11 +7,14 @@ from rest_framework.response import Response
 
 class ActivityView(APIView):
   def get(self, request):
-    isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
-    if isAuthenticated:
-      activities=list(Activity.objects.values())
+    token = request.headers['Authorization']
+    isAuthenticated = Auth.VerifyToken(token)
+    id_player = Auth.GetTokenUserId(token)
+    # print(id_player)
+    if isAuthenticated and id_player != 0:
+      activities=list(Activity.objects.filter(user_id=id_player).values())
       if len(activities)>0:
-        data={'message':"success",'activities':activities}
+        data={'activities':activities}
       else:
         data={'message':"activities not found..."}
       return JsonResponse(data)
@@ -19,16 +22,27 @@ class ActivityView(APIView):
       return Response(status=401)
 
   def post(self, request):
-    isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
+    token = request.headers['Authorization']
+    isAuthenticated = Auth.VerifyToken(token)
     if isAuthenticated:
+      user_id = Auth.GetTokenUserId(token)
       jd = json.loads(request.body)
-      Activity.objects.create(user=jd['user'],
+      points = 0
+      if jd['priority_level'] == 'High':
+        points = 50
+      elif jd['priority_level'] == 'Meddium':
+        points = 30
+      elif jd['priority_level'] == 'Low':
+        points = 10
+      else:
+        points = 0
+      Activity.objects.create(user_id=user_id,
       description=jd['description'],
       start_date=jd['start_date'],
       end_date=jd['end_date'],
-      points=jd['points'],
+      points=points,
       priority_level=jd['priority_level'],
-      state=jd['state'],
+      state='active ',
       title=jd['title'],
       type=jd['type'],
       )

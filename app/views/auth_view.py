@@ -1,5 +1,5 @@
 
-from app.models import User
+from app.models import Player
 from rest_framework.views import APIView, exception_handler
 from rest_framework.response import Response
 # from rest_framework.authtoken.views import ObtainAuthToken
@@ -9,14 +9,15 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt 
 from rest_framework.authtoken.models import Token
 from django.http.response import JsonResponse
-from app.serializers.user_serializer import UserSerializer
+from app.serializers.player_serializer import PlayerSerializer
 import json
 from jose import jwt
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from datetime import datetime, date, timedelta
-
+import bcrypt, hashlib
+import base64
 import environ
 
 
@@ -28,52 +29,63 @@ class Auth(APIView):
   permission_classes = [AllowAny]
   def post(self, request):
     try:
-      queryset = User.objects.get(pk=request.data.get("user_name"))
+      player = Player.objects.get(user_name=request.data.get("user_name"))
     except:
+      print(1)
       return Response(status=status.HTTP_404_NOT_FOUND)
-    raw_password = request_data['password'].encode('utf_8')
-    password_hash = bcrypt.hashpw(base64.b64encode(hashlib.sha256(raw_password).digest()), bcrypt.gensalt(rounds=12, prefix=b"2a"))
-    original_password = queryset.data.get("password")
-    if raw_password == original_password:
-      now = str(datetime.now())
-      expired = str(datetime.now() + timedelta(minutes=15))
-      keys = {
-        'player': request.data.get("user_name"),
-        'date': now,
-        'expiration_date': expired
-      }
-      env = environ.Env()
-      environ.Env.read_env()
-      if queryset.user_name == request.data.get("user_name") and queryset.password == request.data.get("password"):
-        token = jwt.encode(
-          keys,
-          env("SECRET_KEY"),
-          algorithm='HS256')
-        return Response(data=token,status=status.HTTP_200_OK)
-      return Response(status=status.HTTP_404_NOT_FOUND)
-    else:
-      return Response(status=404)
+    raw_password = request.data['password'].encode()
+    original_password = player.password
+    origin = original_password.encode()
+    print(raw_password)
+    print(origin)
+    passwd = bcrypt.checkpw(base64.b64encode(hashlib.sha256(raw_password).digest()), origin)
+    
+    now = str(datetime.now())
+    expired = str(datetime.now() + timedelta(minutes=15))
+    keys = {
+      'player': request.data.get("user_name"),
+      'id_player': player.id,
+      'date': now,
+      'expiration_date': expired
+    }
+    env = environ.Env()
+    environ.Env.read_env()
+    if player.user_name == request.data.get("user_name") and passwd:
+      token = jwt.encode(
+        keys,
+        env("SECRET_KEY"),
+        algorithm='HS256')
+      return Response(token,status=status.HTTP_200_OK)
+    print(2)
+    return Response(status=status.HTTP_404_NOT_FOUND)
   def VerifyToken(token):
     try:
       env = environ.Env()
       environ.Env.read_env()
-      # key = 
       data = jwt.decode(token, env("SECRET_KEY"), algorithms=['HS256'])
-      player = data['player']
+      player = data['id_player']
       expired = data['expiration_date']
-      # if 
-      # user
       try:
-        user = User.objects.get(pk=player)
+        player = Player.objects.get(pk=player)
       except:
-        user = False
+        player = False
       now = str(datetime.now())
-      if user != False and now < expired:
+      if Player != False and now < expired:
         return True
       else:
         return False
     except jwt.JWTError:
       return False
+  def GetTokenUserId(token):
+    try:
+      env = environ.Env()
+      environ.Env.read_env()
+      data = jwt.decode(token, env("SECRET_KEY"), algorithms=['HS256'])
+      player = data['id_player']
+      print(player)
+      return player
+    except:
+      return 0
 
   def custom_exception_handler(exc, context):
     # Call REST framework's default exception handler first,

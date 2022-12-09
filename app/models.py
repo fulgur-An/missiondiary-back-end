@@ -16,19 +16,16 @@ class Item(models.Model):
   description = models.TextField(max_length=500)
 
 
-class User(models.Model):
-  # auth = models.OneToOneField(
-  #   AuthModel,
-  #   on_delete=models.CASCADE,
-  #   verbose_name="related auth")
+class Player(models.Model):
   family_group = models.ForeignKey(
     FamilyGroup,
     null= True,blank=True,
     on_delete=models.SET_NULL, default=''
   )
   items = models.ManyToManyField(Item, null=True)
-  user_name = models.CharField(primary_key=True, max_length=100)
-  mail = models.EmailField(max_length=100)
+  points = models.IntegerField(default=0)
+  user_name = models.CharField(unique=True, max_length=100)
+  mail = models.EmailField(max_length=100, unique=True)
   password = models.CharField(max_length=100)
   name = models.CharField(max_length=100)
   last_name = models.CharField(max_length=100)
@@ -38,7 +35,7 @@ class User(models.Model):
   
 
 class Family(models.Model):
-  user = models.ForeignKey(User, on_delete=models.CASCADE)
+  user = models.ForeignKey(Player, on_delete=models.CASCADE)
   FamilyType = (
     ('FA','father'),
     ('MO','mother'),
@@ -55,7 +52,7 @@ class Family(models.Model):
 
 class Activity(models.Model):
   user = models.ForeignKey(
-    User, 
+    Player, 
     on_delete=models.CASCADE,
   )
   description = models.TextField(max_length=500)
@@ -83,8 +80,8 @@ class Activity(models.Model):
   type = models.CharField(blank=True, choices=ActivityType, max_length=30)
 
 
-class ItemUser(models.Model):
-  user = models.ForeignKey(User, on_delete=models.CASCADE)
+class ItemPlayer(models.Model):
+  user = models.ForeignKey(Player, on_delete=models.CASCADE)
   item = models.ForeignKey(Item, on_delete=models.CASCADE)
   quantity = models.IntegerField()
   user_name = models.CharField(max_length=100)
