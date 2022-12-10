@@ -17,7 +17,6 @@ class RegisterView(APIView):
   serializer_class = PlayerSerializer
   def post(self, request):
     serializer = self.serializer_class(data=request.data)
-    # print(serializer)
     request_data = request.data
     isValid = True
     try:
@@ -27,7 +26,6 @@ class RegisterView(APIView):
 
     if not isValid:
       if serializer.is_valid():
-        # jd = json.loads(request.data)     
         raw_password = request_data['password'].encode()
         password_hash = bcrypt.hashpw(base64.b64encode(hashlib.sha256(raw_password).digest()), bcrypt.gensalt()).decode()
         Player.objects.create(user_name=request_data['user_name'],
@@ -36,7 +34,6 @@ class RegisterView(APIView):
           name=request_data['name'],
           last_name=request_data['last_name'],
         )
-        # data = {'message':'Success'}
         now = str(datetime.now())
         expired = str(datetime.now() + timedelta(minutes=15))
         keys = {

@@ -36,8 +36,6 @@ class Auth(APIView):
     raw_password = request.data['password'].encode()
     original_password = player.password
     origin = original_password.encode()
-    print(raw_password)
-    print(origin)
     passwd = bcrypt.checkpw(base64.b64encode(hashlib.sha256(raw_password).digest()), origin)
     
     now = str(datetime.now())

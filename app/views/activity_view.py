@@ -10,7 +10,6 @@ class ActivityView(APIView):
     token = request.headers['Authorization']
     isAuthenticated = Auth.VerifyToken(token)
     id_player = Auth.GetTokenUserId(token)
-    # print(id_player)
     if isAuthenticated and id_player != 0:
       activities=list(Activity.objects.filter(user_id=id_player).values())
       if len(activities)>0:
@@ -42,7 +41,7 @@ class ActivityView(APIView):
       end_date=jd['end_date'],
       points=points,
       priority_level=jd['priority_level'],
-      state='active ',
+      state='active',
       title=jd['title'],
       type=jd['type'],
       )
@@ -51,39 +50,67 @@ class ActivityView(APIView):
     else:
       return Response(status=401)
 
-  def put(self, request):
-    isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
+  def put(self, request, id):
+    token = request.headers['Authorization']
+    isAuthenticated = Auth.VerifyToken(token)
     if isAuthenticated:
+      user_id = Auth.GetTokenUserId(token)
       jd = json.loads(request.body)
-      activities=list(Activity.objects.filter(id=id).values())
-      if len(activities) > 0:
-        activity=Activity.objects.get(id=id)
-        activity.user=jd['user']
-        activity.description=jd['description']
-        activity.start_date=jd['start_date']
-        activity.end_date=jd['end_date']
-        activity.points=jd['points']
-        activity.priority_level=jd['priority_level']
-        activity.state=jd['state']
-        activity.title=jd['title']
-        activity.type=jd['type']
-        data= {'message': 'Success'}
-      else:
-        data={'message':"users not found..."}
-      return JsonResponse(data)
+      try:
+        activity=Activity.objects.get(pk=id)
+        if activity.__dict__['user_id']==user_id:
+          points = 0
+          if jd['priority_level'] == 'High':
+            points = 50
+          elif jd['priority_level'] == 'Meddium':
+            points = 30
+          elif jd['priority_level'] == 'Low':
+            points = 10
+          else:
+            points = 0
+
+          if jd['state'] == 'done':
+            activity.__dict__['state']=jd['state']
+          else:
+            activity.__dict__['description']=jd['description']
+            activity.__dict__['start_date']=jd['start_date']
+            activity.__dict__['end_date']=jd['end_date']
+            activity.__dict__['points']=points
+            activity.__dict__['priority_level']=jd['priority_level']
+            activity.__dict__['state']='active'
+            activity.__dict__['title']=jd['title']
+            activity.__dict__['type']=jd['type']
+          
+          
+          activity.save()
+          del activity.__dict__['_state']
+          data= {'activity': activity.__dict__}
+          response = Response(data)
+      except Exception as e:
+        print(e)
+        response = Response(status=404)
+      
+      return response
     else:
       return Response(status=401)
 
-  def delete(self, request):
-    isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
+  def delete(self, request, id):
+    token = request.headers['Authorization']
+    isAuthenticated = Auth.VerifyToken(token)
+    user_id = Auth.GetTokenUserId(token)
     if isAuthenticated:
-      activities=list(Activity.objects.filter(id=id).values())
-      if len(activities) > 0:
-        Activity.objects.filter(id=id).delete()
-        data= {'message': 'Success'}
-      else:
-        data={'message':"users not found..."}
-      return JsonResponse(data)
+      try:
+        activity=Activity.objects.get(pk=id)
+        if activity.__dict__['user_id']==user_id:
+          activity.__dict__['state']='ended'
+          activity.save()
+          del activity.__dict__['_state']
+          data= {'activity': activity.__dict__}
+          response = Response(data)
+      except Exception as e:
+        print(e)
+        response = Response(status=404)
+      return response
     else:
       return Response(status=401)
 

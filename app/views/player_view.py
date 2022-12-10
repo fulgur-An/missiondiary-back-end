@@ -51,29 +51,23 @@ class PlayerView(APIView):
         player=Player.objects.get(pk=id)
       except:
         return Response(status=404)
-      del player.__dict__['_state']
+      if jd['level'] > 0 :
+        player.__dict__['level']+=1
+        player.__dict__['points']+=jd['points']
+      else:
+        player.__dict__['user_name']=jd['user_name']
+        player.__dict__['mail']=jd['mail']
+        player.__dict__['name']=jd['name']
+        player.__dict__['last_name']=jd['last_name']
+        player.__dict__['avatar']=jd['avatar']
+        player.__dict__['banner']=jd['banner']
+      player.save()
+      del player.__dict__['banner']
+      del player.__dict__['avatar']
       del player.__dict__['password']
-      player.__dict__['user_name']=jd['user_name']
-      player.__dict__['mail']=jd['mail']
-      player.__dict__['name']=jd['name']
-      player.__dict__['last_name']=jd['last_name']
-      player.__dict__['avatar']=jd['avatar']
-      data= {'player': player}
+      del player.__dict__['_state']
+      data= {'player': player.__dict__}
       return Response(data)
     else:
       return Response(status=401)
     
-  def delete(self, request, id):
-    isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
-    if isAuthenticated:
-      Players=list(Player.objects.filter(id=id).values())
-      if len(Players) > 0:
-        Player.objects.filter(id=id).delete()
-        data= {'message': 'Success'}
-      else:
-        data={'message':"Players not found..."}
-      return JsonResponse(data)
-    else:
-      return Response(status=401)
-
-

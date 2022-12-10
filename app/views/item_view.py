@@ -27,7 +27,8 @@ class ItemView(APIView):
       return Response(status=401)
 
   def post(self, request):
-    isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
+    token = request.headers['Authorization']
+    isAuthenticated = Auth.VerifyToken(token)
     if not isAuthenticated:
       return Response(status=401)
     
@@ -42,42 +43,11 @@ class ItemView(APIView):
       player.__dict__['points']-=item.__dict__['price']
       ItemPlayer.objects.create(user_name=player.__dict__['user_name'],
       quantity=1,
-      user=user_id,
-      item=item.__dict__['id'],
+      user=player,
+      item=item,
       )
+      player.save()
       data = {'message':'Success'}
       return Response(data)
     else:
       return Response(status=404)
-
-  # def put(self, request):
-  #   isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
-  #   if isAuthenticated:
-  #     jd = json.loads(request.body)
-  #     items=list(Item.objects.filter(id=id).values())
-  #     if len(items) > 0:
-  #       item=Item.objects.get(id=id)
-  #       item.item_name=jd['item_name']
-  #       item.image=jd['image']
-  #       item.price=jd['price']
-  #       item.description=jd['description']
-  #       data= {'message': 'Success'}
-  #     else:
-  #       data={'message':"users not found..."}
-  #     return JsonResponse(data)
-  #   else:
-  #     return Response(status=401)
-
-  # def delete(self, request):
-
-  #   isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
-  #   if isAuthenticated:
-  #     items=list(Item.objects.filter(id=id).values())
-  #     if len(items) > 0:
-  #       Item.objects.filter(id=id).delete()
-  #       data= {'message': 'Success'}
-  #     else:
-  #       data={'message':"users not found..."}
-  #     return JsonResponse(data)
-  #   else:
-  #     return Response(status=401)

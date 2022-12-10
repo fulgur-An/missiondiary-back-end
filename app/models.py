@@ -30,6 +30,8 @@ class Player(models.Model):
   name = models.CharField(max_length=100)
   last_name = models.CharField(max_length=100)
   avatar = models.ImageField(null=True)
+  banner = models.ImageField(null=True)
+  level = models.IntegerField(default=0)
 
 
   
@@ -56,7 +58,7 @@ class Activity(models.Model):
     on_delete=models.CASCADE,
   )
   description = models.TextField(max_length=500)
-  start_date = models.DateTimeField(auto_now=True)
+  start_date = models.DateTimeField()
   end_date = models.DateTimeField()
   points = models.IntegerField()
   PriorityLevel = (

@@ -1,8 +1,5 @@
-
-
 from django.urls import include, path
 
-# from views import user_view, family_view, item_view, activity_view, auth_view
 
 from app.views.player_view import PlayerView
 from app.views.family_view import FamilyView
@@ -24,5 +21,4 @@ urlpatterns = [
   path('itemPlayer/', ItemPlayerView.as_view(), name='item_player_list'),
   path('activity/<int:id>', ActivityView.as_view(), name='activity_list'),
   path('activity/', ActivityView.as_view(), name='activity'),
-  # path('o/',include('oauth2_provider.urls', namespace='oauth2_provider'))
 ]
