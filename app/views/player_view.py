@@ -17,13 +17,15 @@ class PlayerView(APIView):
       if (id>0):
         try:
           player=Player.objects.get(pk=id)
+          del player.__dict__['_state']
+          del player.__dict__['password']
+          data={'player':player.__dict__}
         except:
-          return Response(status=404)
-        del player.__dict__['_state']
-        del player.__dict__['password']
-        data={'player':player.__dict__}
+          return Response(status=400)
       else:
         players=list(Player.objects.values())
+        for player in players:
+          del player['password']
         if len(players)>0:
           data={'Players':players}
       return Response(data)
@@ -34,40 +36,45 @@ class PlayerView(APIView):
     isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
     if isAuthenticated:
       try:
-        player = Player.objects.get(pk=request.data.get("user_name"))
+        player = Player.objects.get(user_name=request.data.get("user_name"))
+        del player.__dict__['_state']
+        del player.__dict__['password']
+        return Response(player.__dict__)
       except:
-        return Response(status=404)
-      del player.__dict__['_state']
-      del player.__dict__['password']
-      return Response(player.__dict__)
+        return Response(status=400)
     else:
       return Response(status=401)
 
   def put(self, request, id):
-    isAuthenticated = Auth.VerifyToken(request.headers['Authorization'])
-    if isAuthenticated:
+    token = request.headers['Authorization']
+    isAuthenticated = Auth.VerifyToken(token)
+    user_id = Auth.GetTokenUserId(token)
+    if isAuthenticated and user_id == id:
       jd = json.loads(request.body)
       try:
-        player=Player.objects.get(pk=id)
+        if jd['name']=='' :
+          return Response(status=400)
       except:
-        return Response(status=404)
-      if jd['level'] > 0 :
-        player.__dict__['level']+=1
-        player.__dict__['points']+=jd['points']
-      else:
-        player.__dict__['user_name']=jd['user_name']
-        player.__dict__['mail']=jd['mail']
-        player.__dict__['name']=jd['name']
-        player.__dict__['last_name']=jd['last_name']
-        player.__dict__['avatar']=jd['avatar']
-        player.__dict__['banner']=jd['banner']
-      player.save()
-      del player.__dict__['banner']
-      del player.__dict__['avatar']
-      del player.__dict__['password']
-      del player.__dict__['_state']
-      data= {'player': player.__dict__}
-      return Response(data)
+        return Response(status=400)
+      try:
+        player=Player.objects.get(pk=id)
+        if jd['level'] > 0 :
+          player.__dict__['level']+=1
+          player.__dict__['points']+=jd['points']
+        else:
+          player.__dict__['name']=jd['name']
+          player.__dict__['last_name']=jd['last_name']
+          player.__dict__['avatar']=jd['avatar']
+          player.__dict__['banner']=jd['banner']
+        player.save()
+        del player.__dict__['banner']
+        del player.__dict__['avatar']
+        del player.__dict__['password']
+        del player.__dict__['_state']
+        data= {'player': player.__dict__}
+        return Response(data)
+      except:
+        return Response(status=400)
     else:
       return Response(status=401)
     

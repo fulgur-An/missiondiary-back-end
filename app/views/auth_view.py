@@ -31,7 +31,6 @@ class Auth(APIView):
     try:
       player = Player.objects.get(user_name=request.data.get("user_name"))
     except:
-      print(1)
       return Response(status=status.HTTP_404_NOT_FOUND)
     raw_password = request.data['password'].encode()
     original_password = player.password
@@ -53,8 +52,7 @@ class Auth(APIView):
         keys,
         env("SECRET_KEY"),
         algorithm='HS256')
-      return Response(token,status=status.HTTP_200_OK)
-    print(2)
+      return Response({"token":token,"id":player.id},status=status.HTTP_200_OK)
     return Response(status=status.HTTP_404_NOT_FOUND)
   def VerifyToken(token):
     try:
@@ -80,7 +78,6 @@ class Auth(APIView):
       environ.Env.read_env()
       data = jwt.decode(token, env("SECRET_KEY"), algorithms=['HS256'])
       player = data['id_player']
-      print(player)
       return player
     except:
       return 0

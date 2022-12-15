@@ -49,9 +49,7 @@ INSTALLED_APPS = [
     # 'app.models',
     'app.serializers',
     'app.views',
-    'oauth2_provider',
     'rest_framework',
-    'rest_framework.authtoken',
     'corsheaders',
 ]
 
@@ -170,5 +168,5 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:8080',
+    "http://localhost:8080"
 ]

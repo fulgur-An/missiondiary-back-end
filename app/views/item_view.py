@@ -15,11 +15,14 @@ class ItemView(APIView):
         try:
           item = Item.objects.get(pk=id)
         except:
-          return Response(status=404)
+          return Response(status=400)
           del item.__dict__['_state']
           data={'item':item.__dict__}
       else:
-        items=list(Item.objects.values())
+        try:
+          items=list(Item.objects.values())
+        except:
+          Response(status=404)
         if len(items)>0:
           data={'items':items}
       return JsonResponse(data)
@@ -38,16 +41,19 @@ class ItemView(APIView):
       item=Item.objects.get(pk=jd['id'])
       player=Player.objects.get(pk=user_id)
     except:
-      return Response(status=404)
+      return Response(status=400)
     if item.__dict__['price'] <= player.__dict__['points']:
-      player.__dict__['points']-=item.__dict__['price']
-      ItemPlayer.objects.create(user_name=player.__dict__['user_name'],
-      quantity=1,
-      user=player,
-      item=item,
-      )
-      player.save()
-      data = {'message':'Success'}
-      return Response(data)
+      try:
+        player.__dict__['points']-=item.__dict__['price']
+        ItemPlayer.objects.create(user_name=player.__dict__['user_name'],
+        quantity=1,
+        user=player,
+        item=item,
+        )
+        player.save()
+        data = {'message':'Success'}
+        return Response(data)
+      except:
+        Response(status=400)
     else:
       return Response(status=404)

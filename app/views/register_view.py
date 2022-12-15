@@ -34,10 +34,12 @@ class RegisterView(APIView):
           name=request_data['name'],
           last_name=request_data['last_name'],
         )
+        player = Player.objects.get(user_name=request.data.get("user_name"))
         now = str(datetime.now())
         expired = str(datetime.now() + timedelta(minutes=15))
         keys = {
           'player': request.data.get("user_name"),
+          'id_player': player.id,
           'date': now,
           'expiration_date': expired
         }
@@ -47,7 +49,7 @@ class RegisterView(APIView):
           keys,
           env("SECRET_KEY"),
           algorithm='HS256')
-        return Response(token, status=status.HTTP_200_OK)
+        return Response({'token':token, 'id': player.id}, status=status.HTTP_200_OK)
       else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
     else:

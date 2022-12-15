@@ -10,8 +10,8 @@ class ItemPlayerView(APIView):
     token = request.headers['Authorization']
     isAuthenticated = Auth.VerifyToken(token)
     if isAuthenticated:
-      user_id = Auth.GetTokenUserId(token)
       try:
+        user_id = Auth.GetTokenUserId(token)
         itemsPlayer = list(ItemPlayer.objects.filter(user_id=user_id).values())
         if len(itemsPlayer)>0:
           data={'items':itemsPlayer}

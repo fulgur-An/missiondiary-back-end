@@ -27,7 +27,7 @@ class Player(models.Model):
   user_name = models.CharField(unique=True, max_length=100)
   mail = models.EmailField(max_length=100, unique=True)
   password = models.CharField(max_length=100)
-  name = models.CharField(max_length=100)
+  name = models.CharField(max_length=100 )
   last_name = models.CharField(max_length=100)
   avatar = models.ImageField(null=True)
   banner = models.ImageField(null=True)
